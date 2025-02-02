@@ -12,7 +12,7 @@ export const AuthProvider = ({ children }) => {
     if (userId) {
       return axios
         .get(
-          `https://uat-tracking.rmtec.in/api/fieldAgent/getAgentById/${userId}`,
+          `https://uat-tracking.rmtec.in:4000/api/fieldAgent/getAgentById/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
 
       return axios
         .post(
-          `https://uat-tracking.rmtec.in/api/fieldAgent/getFieldAgentById/${userId}`,
+          `https://uat-tracking.rmtec.in:4000/api/fieldAgent/getFieldAgentById/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,

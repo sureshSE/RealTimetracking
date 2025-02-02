@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useGoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import { useNavigate } from 'react-router-dom';
+import { Helmet, HelmetProvider } from "react-helmet-async";
 
 const LoginPage = () => {
     const [accessToken, setAccessToken] = useState('');
@@ -28,7 +29,7 @@ const LoginPage = () => {
 
     const sendTokenToServer = async (token) => {
         try {
-            const response = await fetch('https://uat-tracking.rmtec.in/api/v1/web/login', {
+            const response = await fetch('https://uat-tracking.rmtec.in:4000/api/v1/web/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -63,6 +64,16 @@ const LoginPage = () => {
     };
 
     return (
+        <> <HelmetProvider>
+                <Helmet>
+                  <title>Login - RealTimeTracking</title>
+                  <meta
+                    name="description"
+                    content="Overview of field agent performance and metrics."
+                  />
+                  <meta name="keywords" content="dashboard, field agent, management" />
+                </Helmet>
+              </HelmetProvider>
         <div
             style={{
                 height: "100vh",
@@ -158,7 +169,9 @@ const LoginPage = () => {
                     )}
                 </div>
             </div>
-        </div>);
+        </div>
+        </>
+        );
 };
 
 const App = () => (

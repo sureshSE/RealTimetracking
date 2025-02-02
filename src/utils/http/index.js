@@ -1,7 +1,7 @@
 import axios from 'axios'
 import config from "../config"
 
-const BASE_URL = "https://uat-tracking.rmtec.in/"
+const BASE_URL = "https://uat-tracking.rmtec.in:4000/"
 
 const token = localStorage.getItem("token")
 

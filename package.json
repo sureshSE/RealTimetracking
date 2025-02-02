@@ -2,7 +2,7 @@
   "name": "react-ui",
   "version": "0.1.0",
   "private": true,
-  "proxy": "https://uat-tracking.rmtec.in/",
+  "proxy": "https://uat-tracking.rmtec.in:4000/",
   "dependencies": {
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.13.5",

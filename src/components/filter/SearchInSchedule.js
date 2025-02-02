@@ -10,8 +10,6 @@ const searchInSchedule = (data, searchTerm) => {
             item.taskStatus.toLowerCase().includes(lowerCasedTerm) ||
             item.description.toLowerCase().includes(lowerCasedTerm) ||
             item.fieldTag.toLowerCase().includes(lowerCasedTerm)
-
-
     );
 };
 

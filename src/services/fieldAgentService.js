@@ -24,9 +24,9 @@ class FieldAgentService {
         return httpService.put(`api/fieldAgent/updateFieldAgentById/${id}`, data)
     }
 
-    async updateFieldAgent(id, data) {
-        return httpService.put(`api/fieldAgent/updateFieldAgentById/${id}`, data)
-    }
+    // async updateFieldAgent(id, data) {
+    //     return httpService.put(`api/fieldAgent/updateFieldAgentById/${id}`, data)
+    // }
 
     async getRole() {
         return httpService.get(`api/role/getRoles`)

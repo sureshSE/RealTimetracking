@@ -7,7 +7,7 @@ const WebSocketTest = () => {
   const [logs, setLogs] = useState([]);
   
   const token = localStorage.getItem("token");
-  const socketUrl = "https://uat-tracking.rmtec.in/tracking-websocket"; // Replace with your WebSocket URL
+  const socketUrl = "https://uat-tracking.rmtec.in:4000/tracking-websocket"; // Replace with your WebSocket URL
   const bearerToken = `Bearer${token}`; // Your actual token
   const [socket, setSocket] = useState(null);
 
@@ -135,6 +135,7 @@ const WebSocketTest = () => {
       </div>
     </div>
   );
+  
 };
 
 export default WebSocketTest;

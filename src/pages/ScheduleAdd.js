@@ -1,17 +1,12 @@
-/* global google */
+/* global H */
 import React, { useEffect, useState, useRef, useContext } from "react";
-import {
-  GoogleMap,
-  Marker,
-  useLoadScript,
-  Autocomplete,
-} from "@react-google-maps/api";
 import { useNavigate } from "react-router-dom";
 import adminLayout from "../hoc/adminLayout";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
+import { Helmet, HelmetProvider } from "react-helmet-async";
 
 const ScheduleAdd = () => {
   const { user } = useContext(AuthContext);
@@ -25,20 +20,19 @@ const ScheduleAdd = () => {
   const [polyline, setPolyline] = useState("");
   const [markers, setMarkers] = useState([]);
   const [userDetails, setUserDetails] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+
+  const mapRef = useRef(null);
+  const platformRef = useRef(null);
+  const uiRef = useRef(null);
 
   const [markerPosition, setMarkerPosition] = useState({
     lat: 40.7128,
     lng: -74.006, // Default to New York City
   });
+
   const navigate = useNavigate();
-  const autocompleteRef = useRef(null);
-
-  const GOOGLE_MAPS_API_KEY = "AIzaSyBVjU4ub-tClWBbtg70ebUhZ_t3UNecsTc"; // Replace with your API key
-
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    libraries: ["places"], // Load the Places library
-  });
 
   useEffect(() => {
     if (user) {
@@ -47,38 +41,131 @@ const ScheduleAdd = () => {
     }
   }, [user]);
 
-  const handleMapClick = (event) => {
-    const { latLng } = event;
-    setMarkerPosition({
-      lat: latLng.lat(),
-      lng: latLng.lng(),
-    });
+  useEffect(() => {
+    initializeMap();
+  }, [markerPosition, markers]);
 
-    // Reverse geocode to get the address
-    const geocoder = new google.maps.Geocoder();
-    geocoder.geocode(
-      { location: { lat: latLng.lat(), lng: latLng.lng() } },
-      (results, status) => {
-        if (status === "OK" && results[0]) {
-          setAddress(results[0].formatted_address);
+  const initializeMap = () => {
+    if (!mapRef.current) {
+      const platform = new H.service.Platform({
+        apikey: "KRRMt1-LeUW4XhK6v3m9hJYmY0wp0Q3CswNQc4ThGH0", // Replace with your HERE Maps API key
+      });
+      platformRef.current = platform;
+
+      const defaultLayers = platform.createDefaultLayers();
+
+      const map = new H.Map(
+        document.getElementById("hereMap"),
+        defaultLayers.vector.normal.map,
+        {
+          center: markerPosition,
+          zoom: 14,
         }
+      );
+
+      // Enable map events and UI
+      const behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
+      const ui = H.ui.UI.createDefault(map, defaultLayers);
+      uiRef.current = ui;
+
+      mapRef.current = map;
+    } else {
+      const map = mapRef.current;
+      map.setCenter(markerPosition);
+
+      // Clear existing markers
+      map.getObjects().forEach((obj) => map.removeObject(obj));
+
+      // Add marker for the current position
+      const marker = new H.map.Marker(markerPosition);
+      map.addObject(marker);
+
+      // Add polygon markers
+      markers.forEach((markerPos) => {
+        const polygonMarker = new H.map.Marker(markerPos);
+        map.addObject(polygonMarker);
+      });
+    }
+  };
+
+  const handleMapClick = (evt) => {
+    if (!evt || !evt.currentPointer) {
+      console.error("Invalid map event:", evt);
+      return;
+    }
+
+    const map = mapRef.current;
+    map.addEventListener("tap", handleMapClick);
+
+    const coord = map.screenToGeo(
+      evt.currentPointer.viewportX,
+      evt.currentPointer.viewportY
+    );
+
+    if (coord) {
+      setMarkerPosition({ lat: coord.lat, lng: coord.lng });
+
+      // Add marker to map
+      const marker = new H.map.Marker({ lat: coord.lat, lng: coord.lng });
+      map.addObject(marker);
+    }
+  };
+
+  const reverseGeocode = (lat, lng) => {
+    const platform = platformRef.current;
+    const geocoder = platform.getSearchService();
+
+    geocoder.reverseGeocode(
+      {
+        at: `${lat},${lng}`,
+      },
+      (result) => {
+        if (result && result.items.length > 0) {
+          setAddress(result.items[0].address.label);
+        }
+      },
+      (error) => {
+        console.error("Reverse geocoding failed:", error);
       }
     );
   };
 
-  const handlePlaceChanged = () => {
-    if (autocompleteRef.current) {
-      const place = autocompleteRef.current.getPlace();
-      if (place.geometry) {
-        const newPosition = {
-          lat: place.geometry.location.lat(),
-          lng: place.geometry.location.lng(),
-        };
-        setMarkerPosition(newPosition);
-        setAddress(place.formatted_address || "");
-      }
-    }
-  };
+  // const searchLocation = (query) => {
+  //   if (!query) {
+  //     setSuggestions([]);
+  //     return;
+  //   }
+
+  //   const platform = platformRef.current;
+  //   const autosuggestService = platform.getSearchService();
+
+  //   autosuggestService.autosuggest(
+  //     {
+  //       q: query,
+  //       at: `${markerPosition.lat},${markerPosition.lng}`,
+  //     },
+  //     (result) => {
+  //       if (result && result.items) {
+  //         setSuggestions(result.items);
+  //       }
+  //     },
+  //     (error) => {
+  //       console.error("Autosuggest failed:", error);
+  //     }
+  //   );
+  // };
+
+  // const handleSuggestionClick = (suggestion) => {
+  //   if (suggestion.position) {
+  //     setMarkerPosition({
+  //       lat: suggestion.position.lat,
+  //       lng: suggestion.position.lng,
+  //     });
+  //     setAddress(suggestion.address.label);
+  //     setSuggestions([]);
+  //     setSearchQuery(suggestion.address.label);
+  //   }
+  // };
 
   const handlePolygonesDetails = async (user) => {
     try {
@@ -86,7 +173,7 @@ const ScheduleAdd = () => {
 
       await axios
         .post(
-          "https://uat-tracking.rmtec.in/api/scheduledVisitTrackId/getAllPolygons",
+          "https://uat-tracking.rmtec.in:4000/api/scheduledVisitTrackId/getAllPolygons",
           {
             query: "",
             variables: {
@@ -122,7 +209,7 @@ const ScheduleAdd = () => {
 
       await axios
         .get(
-          "https://uat-tracking.rmtec.in/api/fieldAgent/getFieldAgentByRoleId/1",
+          "https://uat-tracking.rmtec.in:4000/api/fieldAgent/getFieldAgentByRoleId/1",
 
           {
             headers: {
@@ -142,24 +229,8 @@ const ScheduleAdd = () => {
   const handleSubmit = (event) => {
     event.preventDefault();
 
-    // Validate required fields
     if (!sendTo || !date || !address || !note) {
       alert("Please fill out all required fields.");
-      return;
-    }
-
-    const formData = {
-      sendTo,
-      date,
-      address,
-      note,
-      markerPosition,
-      fieldtag,
-    };
-
-    // Ensure user is available
-    if (!user || !user.name) {
-      alert("User information is missing.");
       return;
     }
 
@@ -171,7 +242,7 @@ const ScheduleAdd = () => {
 
     axios
       .post(
-        "https://uat-tracking.rmtec.in/api/scheduledVisitTrackId/createScheduleForWeb",
+        "https://uat-tracking.rmtec.in:4000/api/scheduledVisitTrackId/createScheduleForWeb",
         {
           assignee: sendTo,
           assigner: user.fieldAgentId,
@@ -181,12 +252,12 @@ const ScheduleAdd = () => {
           fieldTag: fieldtag,
           latitude: `${markerPosition.lat}`,
           longitude: `${markerPosition.lng}`,
-          teamId: 1, // You might want to replace this with an actual team ID
+          teamId: 1,
           description: address,
           notes: note,
-          taskStatus: "Pending", // default
+          taskStatus: "Pending",
           visitedStatus: "Not Visited",
-          polygonIds: [52], // Ensure the polygonId is correct
+          polygonIds: [52],
         },
         {
           headers: {
@@ -197,7 +268,6 @@ const ScheduleAdd = () => {
       )
       .then((response) => {
         if (response.status === 200) {
-          // Successfully submitted
           navigate("/schedule-list");
         } else {
           alert("Something went wrong, please try again later.");
@@ -209,10 +279,6 @@ const ScheduleAdd = () => {
           "An error occurred while submitting your data. Please try again."
         );
       });
-
-    console.log("Submitted Data:", formData);
-
-    // Optional: Show a loading spinner while the request is in progress
   };
 
   const handleDropdownChange = (e) => {
@@ -220,37 +286,74 @@ const ScheduleAdd = () => {
     const polygon = polygonList.find((item) => item.polygonId === selectedId);
     setSelectedPolygon(polygon);
 
-    // Generate polyline and place markers at polygon points
     if (polygon && polygon.polygons) {
-      // Update the polyline string
       const polylineString = polygon.polygons
         .map((point) => `${point.lat},${point.lon}`)
         .join(" | ");
       setPolyline(polylineString);
 
-      // Set markers at polygon points
       const newMarkers = polygon.polygons.map((point) => ({
         lat: point.lat,
         lng: point.lon,
       }));
 
-      for (const newMarker of newMarkers) {
-        setMarkerPosition(newMarker);
-      }
+      setMarkers(newMarkers);
     } else {
       setPolyline("");
       setMarkers([]);
-      setMarkerPosition([]);
     }
   };
 
-  if (!isLoaded) {
-    return <div>Loading...</div>;
-  }
+  const searchLocation = (query) => {
+    if (!query) {
+      setSuggestions([]);
+      return;
+    }
+
+    const platform = platformRef.current;
+    const autosuggestService = platform.getSearchService();
+
+    autosuggestService.autosuggest(
+      {
+        q: query,
+        at: `${markerPosition.lat},${markerPosition.lng}`,
+      },
+      (result) => {
+        if (result && result.items) {
+          setSuggestions(result.items);
+        }
+      },
+      (error) => {
+        console.error("Autosuggest failed:", error);
+      }
+    );
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    if (suggestion?.position && suggestion?.address?.label) {
+      setMarkerPosition({
+        lat: suggestion.position.lat,
+        lng: suggestion.position.lng,
+      });
+      setAddress(suggestion.address.label);
+      setSuggestions([]);
+      setSearchQuery(suggestion.address.label);
+    }
+  };
 
   return (
     <>
-      <h3 className="mb-4 title">Schedule</h3>
+      <HelmetProvider>
+        <Helmet>
+          <title>Schedule - RealTimeTracking</title>
+          <meta
+            name="description"
+            content="Overview of field agent performance and metrics."
+          />
+          <meta name="keywords" content="dashboard, field agent, management" />
+        </Helmet>
+      </HelmetProvider>
+      <h3 className="mb-4 title">Create Schedule</h3>
       <div className="container mt-4 fieldagentmange">
         <form onSubmit={handleSubmit}>
           <div className="row mb-3">
@@ -317,7 +420,7 @@ const ScheduleAdd = () => {
               ></textarea>
             </div>
             <div className="col-md-6">
-            <label htmlFor="polygonDropdown" className="form-label">
+              <label htmlFor="polygonDropdown" className="form-label">
                 Select Polygon
               </label>
               <select
@@ -334,62 +437,99 @@ const ScheduleAdd = () => {
               </select>
             </div>
             <div className="col-md-6">
-              <label htmlFor="address" className="form-label">
+              <label htmlFor="fieldtag" className="form-label">
                 Schedule Name
               </label>
-                <input
-                  type="tel"
-                  className="form-control"
-                  placeholder="Enter Schdule Name"
-                  value={fieldtag}
+              <input
+                type="text"
+                id="fieldtag"
+                className="form-control"
+                placeholder="Enter Schedule Name"
+                value={fieldtag}
                 onChange={(e) => setFieldTag(e.target.value)}
                 required
-                />
+              />
             </div>
-          </div>
-          <div className="row mb-3">
-
-            <div className="col-md-6">
-              <label htmlFor="search" className="form-label">
+            {/* <div className="col-md-6">
+              <label htmlFor="searchQuery" className="form-label">
                 Search Location
               </label>
-              <Autocomplete
-                onLoad={(autocomplete) =>
-                  (autocompleteRef.current = autocomplete)
-                }
-                onPlaceChanged={handlePlaceChanged}
-              >
-                <input
-                  type="text"
-                  id="search"
-                  className="form-control"
-                  placeholder="Search for a location"
-                />
-              </Autocomplete>
+              <input
+                type="text"
+                id="searchQuery"
+                className="form-control"
+                placeholder="Search for a location"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  searchLocation(e.target.value);
+                }}
+              />
+              {suggestions.length > 0 && (
+                <ul className="list-group mt-2">
+                  {suggestions.map((suggestion, index) => (
+                    <li
+                      key={index}
+                      className="list-group-item list-group-item-action"
+                      onClick={() => handleSuggestionClick(suggestion)}
+                    >
+                      {suggestion.address.label}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div> */}
+
+            <div className="col-md-6">
+              <label htmlFor="searchQuery" className="form-label">
+                Search Location
+              </label>
+              <input
+                type="text"
+                id="searchQuery"
+                className="form-control"
+                placeholder="Search for a location"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  searchLocation(e.target.value);
+                }}
+              />
+              {suggestions.length > 0 && (
+                <ul className="list-group mt-2">
+                  {suggestions
+                    .filter((suggestion) => suggestion?.address?.label)
+                    .map((suggestion, index) => (
+                      <li
+                        key={index}
+                        className="list-group-item list-group-item-action"
+                        onClick={() => handleSuggestionClick(suggestion)}
+                      >
+                        {suggestion.address.label}
+                      </li>
+                    ))}
+                </ul>
+              )}
             </div>
           </div>
+
           <div className="row mb-3">
             <div className="col-md-12">
-              <label htmlFor="map" className="form-label">
-                Map (Optional)
+              <label htmlFor="hereMap" className="form-label">
+                Map
               </label>
-              <GoogleMap
-                mapContainerStyle={{
+              <div
+                id="hereMap"
+                style={{
                   width: "100%",
                   height: "300px",
                   border: "1px solid #ccc",
                 }}
-                center={markerPosition}
-                zoom={14}
                 onClick={handleMapClick}
-              >
-                <Marker position={markerPosition} />
-                {markers.map((marker, index) => (
-                  <Marker key={index} position={marker} />
-                ))}
-              </GoogleMap>
+              ></div>
             </div>
           </div>
+
           <div className="row">
             <div className="col-12 text-end">
               <button

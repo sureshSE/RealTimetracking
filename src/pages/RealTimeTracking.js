@@ -16,11 +16,9 @@ import { AuthContext } from "../context/AuthContext";
 import ScheduleComponent from "../components/ScheduleComponent";
 import AgentComponent from "../components/AgentComponent";
 
-
-
 const RealTimeTracking = () => {
   const { user } = useContext(AuthContext);
-  const [selectedAgent, setSelectedAgent] = useState(null);
+  const [selectedAgent, setSelectedAgent] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [teamData, setTeamData] = useState([]);
   const [agent, setAgentName] = useState("");
@@ -32,33 +30,33 @@ const RealTimeTracking = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
-
   useEffect(() => {
     if (user) {
       setAgentName(user);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (user) {
       setUserName(user);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (user) {
       handleTrakingUser(user);
     }
   }, [user]);
 
-  
+  useEffect(() => {
+    if (teamData.length > 0) {
+      const firstTeam = teamData[0];
+      setSearchTerm(firstTeam.teamName);
+      SetFieldAgentData(firstTeam.agentUser);
+
+      if (firstTeam.agentUser.length > 0) {
+        const firstAgent = firstTeam.agentUser[0];
+        handleAgentClick(firstAgent);
+      }
+    }
+  }, [teamData]);
 
   const handleTrakingUser = async (user) => {
     const token = localStorage.getItem("token");
 
     try {
       const response = await fetch(
-        "https://uat-tracking.rmtec.in/api/teams/getAllTeamDetails",
+        "https://uat-tracking.rmtec.in:4000/api/teams/getAllTeamDetails",
         {
           method: "POST",
           headers: {
@@ -89,11 +87,10 @@ const RealTimeTracking = () => {
 
   const handleAgentClick = async (agent) => {
     if (agent) {
-
       try {
         const token = localStorage.getItem("token");
         const response = await fetch(
-          `https://uat-tracking.rmtec.in/api/fieldAgent/realTimeTrackingDetails/${agent.fieldAgentId}`,
+          `https://uat-tracking.rmtec.in:4000/api/fieldAgent/realTimeTrackingDetails/${agent.fieldAgentId}`,
           {
             method: "GET",
             headers: {
@@ -138,6 +135,7 @@ const RealTimeTracking = () => {
     setFilteredData(teamData); // Show all data on mouse enter
     setDropdownVisible(true);
   };
+
 
   return (
     <>
@@ -245,12 +243,16 @@ const RealTimeTracking = () => {
                             )}
                             <div>
                               {/* <Card.Title>{agent.name}</Card.Title> */}
-                              <Card.Title>{agent.name.replace(/\b\w/g, char => char.toUpperCase())}</Card.Title>
+                              <Card.Title>
+                                {agent.name.replace(/\b\w/g, (char) =>
+                                  char.toUpperCase()
+                                )}
+                              </Card.Title>
 
                               <Card.Text style={{ color: "#fff" }}>
-                              {searchTerm} | {agent.role}
+                                {searchTerm} | {agent.role}
                               </Card.Text>
-                               {/* <Card.Text
+                              {/* <Card.Text
                                 style={{
                                   backgroundColor: "#fff",
                                   padding: "5px",
@@ -304,7 +306,9 @@ const RealTimeTracking = () => {
                         <Card.Body className="ms-3">
                           {" "}
                           {/* Added margin start to give space from the image */}
-                          <Card.Title>{selectedAgent.name.replace(/\b\w/g, char => char.toUpperCase())}</Card.Title>
+                          <Card.Title>
+                            {selectedAgent && selectedAgent.name}
+                          </Card.Title>
                           <Card.Text>
                             <strong>Designation:</strong>{" "}
                             {selectedAgent.designation}
@@ -346,7 +350,9 @@ const RealTimeTracking = () => {
                           >
                             {/* <p>Map view for {selectedAgent.name}</p> */}
                             <div className="overview-con">
-                              <RealtimeComponent />
+                              <RealtimeComponent
+                                AgentId={selectedAgent.userId}
+                              />
                             </div>
                             <div
                               id="mapContainer"
@@ -358,8 +364,7 @@ const RealTimeTracking = () => {
                           <AgentComponent formData={selectedAgent} />
                         </Tab.Pane>
                         <Tab.Pane eventKey="schedule">
-                          <ScheduleComponent formData={selectedAgent}
-                          />
+                          <ScheduleComponent formData={selectedAgent} />
                         </Tab.Pane>
                         <Tab.Pane eventKey="placeInterest">
                           <div className="overview-con">
@@ -374,8 +379,7 @@ const RealTimeTracking = () => {
             </div>
           </div>
         </>
-      )
-      }
+      )}
     </>
   );
 };

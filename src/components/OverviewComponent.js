@@ -44,6 +44,12 @@ const OverviewComponent = () => {
   const [teamData, setTeamData] = useState([]);
   const [name, setName] = useState(null);
   const [team, setTeam] = useState(null);
+  useEffect(() => {
+    if (!sessionStorage.getItem("reloaded")) {
+      sessionStorage.setItem("reloaded", "true");
+      window.location.reload();
+    }
+  }, []);
 
   const fetchData = async () => {
     const data = {
@@ -101,7 +107,7 @@ const OverviewComponent = () => {
 
     try {
       const response = await fetch(
-        `https://uat-tracking.rmtec.in/api/teams/count/${user.fieldAgentId}`,
+        `https://uat-tracking.rmtec.in:4000/api/teams/count/${user.fieldAgentId}`,
         {
           method: "GET",
           headers: {
@@ -220,7 +226,6 @@ const OverviewComponent = () => {
       if (routeMap) routeMap.dispose();
     };
   }, [trackingData]);
-
 
   return (
     <div className="container mt-5">

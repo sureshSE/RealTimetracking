@@ -2,6 +2,9 @@ import React, { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import fieldAgentService from "../../services/fieldAgentService";
 import CustomAutocomplete from "../../components/filter/AutoComplete";
+import TextField from "@mui/material/TextField";
+import Autocomplete from "@mui/material/Autocomplete";
+import axios from "axios";
 
 const RouteMap = () => {
   const { user } = useContext(AuthContext);
@@ -11,8 +14,12 @@ const RouteMap = () => {
   const [modalData, setModalData] = useState(null);
   const [nameData, setNameData] = useState([]);
   const [teamData, setTeamData] = useState([]);
-  const [name, setName] = useState(null);
+  const [selectedNames, setSelectedNames] = useState([]);
+  const [date, setDate] = useState(null);
+  const [startDate, setstartDate] = useState(null);
   const [team, setTeam] = useState(null);
+  const [fromDate, setFromDate] = useState(null);
+  const [toDate, setToDate] = useState(null);
 
   const fetchData = async () => {
     const data = {
@@ -37,30 +44,39 @@ const RouteMap = () => {
         query: "",
         variables: {
           userId: "",
-          startDate: "",
           roleId: "",
-          timeSpentDetail: "",
+          timeSpentDetail: "false",
           location: "",
           search: "",
           page: 0,
-          limit: 20,
+          limit: 200,
         },
       };
 
-      if (name) {
-        payload.fieldAgent = name?.userId.toString();
-        request.variables.fieldAgent = name?.userId.toString();
+      if (selectedNames.length) {
+        payload.userIds = selectedNames.map((user) => user.userId.toString());
+        request.variables.userIds = selectedNames.map((user) =>
+          user.userId.toString()
+        );
       }
       if (team) {
         payload.teamId = team.teamId.toString();
         request.variables.teamId = team.teamId.toString();
       }
 
+      if (fromDate) {
+        request.variables.startDate = fromDate ? fromDate.toString() : "";
+      }
+
+      if (toDate) {
+        request.variables.endDate = toDate ? toDate.toString() : "";
+      }
+
       try {
         const liveTrackingResponse = await fieldAgentService.filterLivetracting(
           payload
         );
-        if (!name?.userId) {
+        if (!selectedNames.length) {
           setNameData(liveTrackingResponse.data.data);
         }
 
@@ -73,10 +89,9 @@ const RouteMap = () => {
       }
     };
     filterEmployeeData();
-  }, [name, team]);
+  }, [selectedNames, team, fromDate, toDate]);
 
   useEffect(() => {
-    if (user) fetchTrackingData(user);
     fetchData();
   }, [user]);
 
@@ -86,14 +101,13 @@ const RouteMap = () => {
       return;
     }
 
-    // Dispose of the previous map instance if it exists
     if (mapInstance) {
       mapInstance.dispose();
     }
 
     const H = window.H;
     const platform = new H.service.Platform({
-      apikey: "KRRMt1-LeUW4XhK6v3m9hJYmY0wp0Q3CswNQc4ThGH0", // Replace with your API key
+      apikey: "KRRMt1-LeUW4XhK6v3m9hJYmY0wp0Q3CswNQc4ThGH0",
     });
     const defaultLayers = platform.createDefaultLayers();
     const mapContainer = document.getElementById("routeMap");
@@ -106,121 +120,275 @@ const RouteMap = () => {
     new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
     H.ui.UI.createDefault(map, defaultLayers);
 
-    const validPoints = trackingData
-      .filter(
-        (data) =>
+    // const validPoints = trackingData
+    //   .filter(
+    //     (data) =>
+    //       data.latitude &&
+    //       data.longitude &&
+    //       !isNaN(parseFloat(data.latitude)) &&
+    //       !isNaN(parseFloat(data.longitude))
+    //   )
+    //   .map((data) => ({
+    //     lat: parseFloat(data.latitude),
+    //     lng: parseFloat(data.longitude),
+    //     ...data,
+    //   }));
+
+    // if (!validPoints.length) {
+    //   console.warn("No valid latitude/longitude found in data.");
+    //   return;
+    // }
+
+    // const lineString = new H.geo.LineString();
+    // validPoints.forEach((point) => lineString.pushPoint(point));
+
+    // const polyline = new H.map.Polyline(lineString, {
+    //   style: { strokeColor: "blue", lineWidth: 4 },
+    // });
+    // map.addObject(polyline);
+
+    // const startPoint = validPoints[0];
+    // const endPoint = validPoints[validPoints.length - 1];
+    const userColors = {}; // To store assigned colors for each user ID
+    const getUserColor = (userId) => {
+      if (!userColors[userId]) {
+        // Generate a random color for the user if not already assigned
+        userColors[userId] = `#${Math.floor(Math.random() * 16777215).toString(
+          16
+        )}`;
+      }
+      return userColors[userId];
+    };
+
+    const usersData = trackingData.reduce((acc, data) => {
+      if (data.userId) {
+        acc[data.userId] = acc[data.userId] || [];
+        if (
           data.latitude &&
           data.longitude &&
           !isNaN(parseFloat(data.latitude)) &&
           !isNaN(parseFloat(data.longitude))
-      )
-      .map((data) => ({
-        lat: parseFloat(data.latitude),
-        lng: parseFloat(data.longitude),
-        ...data,
-      }));
+        ) {
+          acc[data.userId].push({
+            lat: parseFloat(data.latitude),
+            lng: parseFloat(data.longitude),
+            ...data,
+          });
+        }
+      }
+      return acc;
+    }, {});
 
-    if (!validPoints.length) {
-      console.warn("No valid latitude/longitude found in data.");
-      return;
-    }
+    const allPoints = []; // To collect all points for setting bounds
 
-    const lineString = new H.geo.LineString();
-    validPoints.forEach((point) => lineString.pushPoint(point));
+    Object.keys(usersData).forEach((userId) => {
+      const userPoints = usersData[userId];
 
-    const polyline = new H.map.Polyline(lineString, {
-      style: { strokeColor: "blue", lineWidth: 4 },
+      if (!userPoints.length) return;
+
+      const lineString = new H.geo.LineString();
+      userPoints.forEach((point) => {
+        lineString.pushPoint({ lat: point.lat, lng: point.lng });
+        allPoints.push({ lat: point.lat, lng: point.lng }); // Collect points for bounds
+      });
+
+      const polyline = new H.map.Polyline(lineString, {
+        style: { strokeColor: getUserColor(userId), lineWidth: 4 },
+      });
+      map.addObject(polyline);
+
+      const startPoint = userPoints[0];
+      const endPoint = userPoints[userPoints.length - 1];
+
+      const startIcon = new H.map.Icon(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="green" stroke="black" stroke-width="1"><circle cx="12" cy="12" r="10"/></svg>'
+      );
+      const startMarker = new H.map.Marker(
+        { lat: startPoint.lat, lng: startPoint.lng },
+        { icon: startIcon }
+      );
+      map.addObject(startMarker);
+
+      const endIcon = new H.map.Icon(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="red" stroke="black" stroke-width="1"><circle cx="12" cy="12" r="10"/></svg>'
+      );
+      const endMarker = new H.map.Marker(
+        { lat: endPoint.lat, lng: endPoint.lng },
+        { icon: endIcon }
+      );
+      map.addObject(endMarker);
+
+      startMarker.addEventListener("tap", () =>
+        setModalData({
+          name: startPoint.nickName || "Unknown",
+          agentMailId: startPoint.agentMailId || "Not Provided",
+          teamName: startPoint.teamName || "Not Available",
+          fieldTag: startPoint.fieldTag || "No Tag",
+          date: new Date(startPoint.startTime).toLocaleString(),
+        })
+      );
+
+      endMarker.addEventListener("tap", () =>
+        setModalData({
+          name: endPoint.nickName || "Unknown",
+          agentMailId: endPoint.agentMailId || "Not Provided",
+          teamName: endPoint.teamName || "Not Available",
+          fieldTag: endPoint.fieldTag || "No Tag",
+          date: new Date(endPoint.startTime).toLocaleString(),
+        })
+      );
+      map.getViewModel().setLookAtData({ bounds: polyline.getBoundingBox() });
+      setMapInstance(map);
     });
-    map.addObject(polyline);
-
-    const startPoint = validPoints[0];
-    const endPoint = validPoints[validPoints.length - 1];
-
-    const startIcon = new H.map.Icon(
-      '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="green" stroke="black" stroke-width="1"><circle cx="12" cy="12" r="10"/></svg>'
-    );
-    const startMarker = new H.map.Marker(
-      { lat: startPoint.lat, lng: startPoint.lng },
-      { icon: startIcon }
-    );
-    map.addObject(startMarker);
-
-    const endIcon = new H.map.Icon(
-      '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="red" stroke="black" stroke-width="1"><circle cx="12" cy="12" r="10"/></svg>'
-    );
-    const endMarker = new H.map.Marker(
-      { lat: endPoint.lat, lng: endPoint.lng },
-      { icon: endIcon }
-    );
-    map.addObject(endMarker);
-
-    startMarker.addEventListener("tap", () =>
-      setModalData({
-        name: startPoint.nickName || "Unknown",
-        agentMailId: startPoint.agentMailId || "Not Provided",
-        teamName: startPoint.teamName || "Not Available",
-        fieldTag: startPoint.fieldTag || "No Tag",
-        date: new Date(startPoint.startTime).toLocaleString(),
-      })
-    );
-
-    endMarker.addEventListener("tap", () =>
-      setModalData({
-        name: endPoint.nickName || "Unknown",
-        agentMailId: endPoint.agentMailId || "Not Provided",
-        teamName: endPoint.teamName || "Not Available",
-        fieldTag: endPoint.fieldTag || "No Tag",
-        date: new Date(endPoint.startTime).toLocaleString(),
-      })
-    );
-
-    map.getViewModel().setLookAtData({ bounds: polyline.getBoundingBox() });
-    setMapInstance(map);
   };
+
+  // const loadMap = (trackingData) => {
+  //   try {
+  //     if (!trackingData.length || !window.H) {
+  //       console.error("HERE Maps library is not loaded or no tracking data.");
+  //       return;
+  //     }
+
+  //     if (mapInstance) {
+  //       mapInstance.dispose();
+  //     }
+
+  //     const H = window.H;
+  //     const platform = new H.service.Platform({
+  //       apikey: "KRRMt1-LeUW4XhK6v3m9hJYmY0wp0Q3CswNQc4ThGH0",
+  //     });
+  //     const defaultLayers = platform.createDefaultLayers();
+  //     const mapContainer = document.getElementById("routeMap");
+
+  //     if (!mapContainer) {
+  //       console.error("Map container element not found.");
+  //       return;
+  //     }
+
+  //     const map = new H.Map(mapContainer, defaultLayers.vector.normal.map, {
+  //       zoom: 10,
+  //       center: { lat: 0, lng: 0 },
+  //     });
+
+  //     new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
+  //     H.ui.UI.createDefault(map, defaultLayers);
+
+  //     const userColors = {}; // To store assigned colors for each user ID
+  //     const getUserColor = (userId) => {
+  //       if (!userColors[userId]) {
+  //         // Generate a random color for the user if not already assigned
+  //         userColors[userId] = `#${Math.floor(
+  //           Math.random() * 16777215
+  //         ).toString(16)}`;
+  //       }
+  //       return userColors[userId];
+  //     };
+
+  //     const usersData = trackingData.reduce((acc, data) => {
+  //       if (data.userId) {
+  //         acc[data.userId] = acc[data.userId] || [];
+  //         if (
+  //           data.latitude &&
+  //           data.longitude &&
+  //           !isNaN(parseFloat(data.latitude)) &&
+  //           !isNaN(parseFloat(data.longitude))
+  //         ) {
+  //           acc[data.userId].push({
+  //             lat: parseFloat(data.latitude),
+  //             lng: parseFloat(data.longitude),
+  //             ...data,
+  //           });
+  //         }
+  //       }
+  //       return acc;
+  //     }, {});
+
+  //     const allPoints = []; // To collect all points for setting bounds
+
+  //     Object.keys(usersData).forEach((userId) => {
+  //       const userPoints = usersData[userId];
+
+  //       if (!userPoints.length) return;
+
+  //       const lineString = new H.geo.LineString();
+  //       userPoints.forEach((point) => {
+  //         lineString.pushPoint({ lat: point.lat, lng: point.lng });
+  //         allPoints.push({ lat: point.lat, lng: point.lng }); // Collect points for bounds
+  //       });
+
+  //       const polyline = new H.map.Polyline(lineString, {
+  //         style: { strokeColor: getUserColor(userId), lineWidth: 4 },
+  //       });
+  //       map.addObject(polyline);
+
+  //       const startPoint = userPoints[0];
+  //       const endPoint = userPoints[userPoints.length - 1];
+
+  //       const startIcon = new H.map.Icon(
+  //         '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="green" stroke="black" stroke-width="1"><circle cx="12" cy="12" r="10"/></svg>'
+  //       );
+  //       const startMarker = new H.map.Marker(
+  //         { lat: startPoint.lat, lng: startPoint.lng },
+  //         { icon: startIcon }
+  //       );
+  //       map.addObject(startMarker);
+
+  //       const endIcon = new H.map.Icon(
+  //         '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="red" stroke="black" stroke-width="1"><circle cx="12" cy="12" r="10"/></svg>'
+  //       );
+  //       const endMarker = new H.map.Marker(
+  //         { lat: endPoint.lat, lng: endPoint.lng },
+  //         { icon: endIcon }
+  //       );
+  //       map.addObject(endMarker);
+
+  //       startMarker.addEventListener("tap", () =>
+  //         setModalData({
+  //           name: startPoint.nickName || "Unknown",
+  //           agentMailId: startPoint.agentMailId || "Not Provided",
+  //           teamName: startPoint.teamName || "Not Available",
+  //           fieldTag: startPoint.fieldTag || "No Tag",
+  //           date: new Date(startPoint.startTime).toLocaleString(),
+  //         })
+  //       );
+
+  //       endMarker.addEventListener("tap", () =>
+  //         setModalData({
+  //           name: endPoint.nickName || "Unknown",
+  //           agentMailId: endPoint.agentMailId || "Not Provided",
+  //           teamName: endPoint.teamName || "Not Available",
+  //           fieldTag: endPoint.fieldTag || "No Tag",
+  //           date: new Date(endPoint.startTime).toLocaleString(),
+  //         })
+  //       );
+  //     });
+
+  //     if (allPoints.length) {
+  //       // Create bounding box from all points
+  //       const boundingBox = allPoints.reduce(
+  //         (bbox, point) => bbox.extend(new H.geo.Point(point.lat, point.lng)),
+  //         H.geo.Rect.fromPoints(
+  //           new H.geo.Point(allPoints[0].lat, allPoints[0].lng),
+  //           new H.geo.Point(allPoints[0].lat, allPoints[0].lng)
+  //         )
+  //       );
+
+  //       // Set map bounds to focus on the points
+  //       map.getViewModel().setLookAtData({
+  //         bounds: boundingBox,
+  //         animate: true, // Smooth zoom to the bounding box
+  //       });
+  //     }
+
+  //     setMapInstance(map);
+  //   } catch (error) {
+  //     console.error("Error in loadMap function:", error);
+  //   }
+  // };
 
   useEffect(() => {
     loadMap(trackingData);
   }, [trackingData]);
-
-  const fetchTrackingData = async (user) => {
-    const token = localStorage.getItem("token");
-    try {
-      const response = await fetch(
-        "https://uat-tracking.rmtec.in/api/liveTrackingId/getAllLiveTrackingIdDetails",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            query: "",
-            variables: {
-              userId: "203",
-              startDate: "",
-              teamId: "52",
-              roleId: "",
-              timeSpentDetail: "false",
-              location: "",
-              search: "",
-              page: 0,
-              limit: 20,
-            },
-          }),
-        }
-      );
-      const data = await response.json();
-      if (data.statusCode === 200) {
-        setTrackingData(data.data.content);
-      } else {
-        console.error("Error fetching tracking data:", data);
-      }
-    } catch (error) {
-      console.error("Error fetching live tracking data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <>
@@ -240,24 +408,54 @@ const RouteMap = () => {
             getOptionLabel={(option) => option?.teamName}
             onChange={(event, newValue) => {
               setTeam(newValue);
-              setName(null);
+              setSelectedNames([]);
             }}
             placeholder="Select team"
             sx={{ backgroundColor: "white" }}
           />
         </div>
         <div className="col-md-3">
-          <CustomAutocomplete
+          <Autocomplete
+            multiple
             options={nameData}
-            value={name}
-            label="Select Name"
+            value={selectedNames}
             getOptionLabel={(option) => option.name}
-            onChange={(event, newValue) => setName(newValue)}
-            placeholder="Select name"
+            onChange={(event, newValue) => setSelectedNames(newValue)}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                variant="outlined"
+                label="Select Names"
+                placeholder="Select multiple names"
+                sx={{ backgroundColor: "white" }}
+              />
+            )}
+          />
+        </div>
+        <div className="col-md-3">
+          <TextField
+            type="date"
+            name="fromDate"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            variant="outlined"
+            fullWidth
+            sx={{ backgroundColor: "white" }}
+          />
+        </div>
+        <div className="col-md-3">
+          <TextField
+            type="date"
+            name="toDate"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            variant="outlined"
+            fullWidth
             sx={{ backgroundColor: "white" }}
           />
         </div>
       </div>
+
       <div
         id="routeMap"
         style={{

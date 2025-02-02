@@ -48,7 +48,7 @@ const FrequentlyVisitedMap = () => {
           teamId: "",
           endDate: "",
           roleId: "",
-          frequentlyVisitedCount: count || null, // Set count if provided
+          frequentlyVisitedCount: count || 2, // Set count if provided
           search: "",
           page: 0,
           limit: 20,
@@ -56,8 +56,8 @@ const FrequentlyVisitedMap = () => {
       };
 
       if (name) {
-        payload.fieldAgent = name?.userId.toString();
-        request.variables.fieldAgent = name?.userId.toString();
+        payload.userId = name?.userId.toString();
+        request.variables.userId = name?.userId.toString();
       }
       if (team) {
         payload.teamId = team.teamId.toString();

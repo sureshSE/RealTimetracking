@@ -18,8 +18,7 @@ import "jspdf-autotable";
 import useHasPermission from "../utils/permission/pageAccess";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
-import teamDetailsService from "../services/TeamDetailsService";
-import fieldAgentService from "../services/fieldAgentService"
+import fieldAgentService from "../services/fieldAgentService";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import CustomAutocomplete from "../components/filter/AutoComplete";
@@ -36,37 +35,33 @@ const TimeSpent = () => {
   const [teamData, setTeamData] = useState([]);
   const itemsPerPage = 5;
 
-  // filter
   const [name, setName] = useState(null);
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
   const [team, setTeam] = useState(user?.teamId[0] || null);
 
-
   const fetchData = async () => {
     const data = {
-      "query": "",
-      "variables": {
-        "fieldAgentId": `${user?.fieldAgentId.toString()}`,
-        "teamId": "",
-        "search": "",
-        "page": 0,
-        "limit": 20
-      }
-    }
+      query: "",
+      variables: {
+        fieldAgentId: user?.fieldAgentId ? `${user.fieldAgentId.toString()}` : "",
+        teamId: "",
+        search: "",
+        page: 0,
+        limit: 20,
+      },
+    };
     const branch = await fieldAgentService.getTeams(data);
-    setTeamData(branch?.data?.data?.content);
-    setTeam(branch?.data?.data?.content[0])
-  }
-  //filter
+    setTeamData(branch?.data?.data?.content || []);
+    setTeam(branch?.data?.data?.content?.[0] || null);
+  };
 
   useEffect(() => {
     const filterTeamData = async () => {
-      const request = {}
+      const request = {};
       const payload = {
         query: "",
         variables: {
-          // userId: "",
           agentMail: "",
           startDate: "",
           endDate: "",
@@ -80,41 +75,32 @@ const TimeSpent = () => {
       };
 
       if (team) {
-        payload.variables.teamId = team?.teamId.toString();
-        request.teamId = team?.teamId.toString()
-
+        payload.variables.teamId = team.teamId ? team.teamId.toString() : "";
+        request.teamId = team.teamId ? team.teamId.toString() : "";
       }
       if (fromDate) {
         payload.variables.startDate = fromDate.toString();
       }
-
       if (toDate) {
         payload.variables.endDate = toDate.toString();
       }
-
-      if (name) {
-        console.log("🚀 ~ filterTeamData ~ name:", name)
-        payload.variables.nickName = name.nickName
-        request.fieldAgent = name?.userId.toString()
-
+      if (name?.userId) {
+        request.fieldAgent = name.userId.toString();
       }
 
-      await fieldAgentService
-        .filterLivetracting(request)
-        .then((response) => {
-          if (!name?.userId) {
-            setNameData(response.data.data)
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching data:", error);
-        });
-      const token = localStorage.getItem("token");
+      try {
+        const response = await fieldAgentService.filterLivetracting(request);
+        if (!name?.userId) {
+          setNameData(response.data.data || []);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
 
-
-      await axios
-        .post(
-          "https://uat-tracking.rmtec.in/api/liveTrackingId/getAllTotalTimeSpent",
+      try {
+        const token = localStorage.getItem("token");
+        const resp = await axios.post(
+          "https://uat-tracking.rmtec.in:4000/api/liveTrackingId/getAllTotalTimeSpent",
           payload,
           {
             headers: {
@@ -122,54 +108,34 @@ const TimeSpent = () => {
               "Content-Type": "application/json",
             },
           }
-        )
-
-        .then((resp) => {
-          const teamsData = resp ? resp?.data.data.content : [];
-          setTeams(teamsData);
-          setFilteredTeams(teamsData);
-        })
-        .catch((error) => console.error("Error fetching data:", error));
+        );
+        const teamsData = resp?.data?.data?.content || [];
+        setTeams(teamsData);
+        setFilteredTeams(teamsData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
     };
 
-    filterTeamData(user);
+    filterTeamData();
   }, [name, fromDate, toDate, team]);
 
   useEffect(() => {
     if (user) {
       handleTimeSpent(user);
-      fetchData()
-      // handleTeamDetails(user?.fieldAgentId);
+      fetchData();
     }
   }, [user]);
-
-  // const handleTeamDetails = async (id) => {
-  //   try {
-  //     const payload = {
-  //       fieldAgentId: id, // Ensure a valid ID is passed
-  //     };
-  //     const resp = await teamDetailsService.getAllTeamList(payload);
-  //     if (resp && resp.statuscode !== 500) {
-  //       console.log("Team Details Response:", resp);
-  //       setTeamData(resp?.data || []); // Safely set team data if available
-  //     } else {
-  //       console.error("Error fetching team details:", resp);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error in handleTeamDetails:", error.message || error);
-  //   }
-  // };
 
   const handleTimeSpent = async (user) => {
     const token = localStorage.getItem("token");
 
     await axios
       .post(
-        "https://uat-tracking.rmtec.in/api/liveTrackingId/getAllTotalTimeSpent",
+        "https://uat-tracking.rmtec.in:4000/api/liveTrackingId/getAllTotalTimeSpent",
         {
           query: "",
           variables: {
-            // userId: `${user && user?.fieldAgentId}`,
             teamId: `${team}`,
             roleId: ``,
             startDate: "",
@@ -197,7 +163,6 @@ const TimeSpent = () => {
       .catch((error) => console.error("Error fetching data:", error));
   };
 
-  // Pagination
   const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
 
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -205,7 +170,6 @@ const TimeSpent = () => {
   const currentTeams = filteredTeams.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredTeams.length / itemsPerPage);
 
-  // Export to Excel
   const exportToExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(filteredTeams);
     const workbook = XLSX.utils.book_new();
@@ -218,7 +182,6 @@ const TimeSpent = () => {
     saveAs(data, "TimeSpentReport.xlsx");
   };
 
-  // Export to PDF
   const exportToPDF = () => {
     const doc = new jsPDF();
     const columns = [
@@ -231,16 +194,15 @@ const TimeSpent = () => {
       "Time Spent",
     ];
 
-    // Format date to display only the date part
     const formatDate = (date) => {
-      return new Date(date).toLocaleDateString("en-US"); // Format date to MM/DD/YYYY
+      return new Date(date).toLocaleDateString("en-US");
     };
 
     const rows = filteredTeams.map((team) => [
-      formatDate(team.date), // Use the formatDate function to get only the date
-      team.nickName,
-      team.teamName,
-      team.fieldTag,
+      formatDate(team.date),
+      team.nickName || "",
+      team.teamName || "",
+      team.fieldTag || "",
       team.loginTime,
       team.logoutTime,
       team.totalTimeSpent,
@@ -250,7 +212,6 @@ const TimeSpent = () => {
     doc.autoTable({ startY: 20, head: [columns], body: rows });
     doc.save("TimeSpentReport.pdf");
   };
-  console.log("------------filteredTeams-----time spent------>", filteredTeams);
 
   return (
     <>
@@ -263,7 +224,6 @@ const TimeSpent = () => {
         <>
           <h3 className="title">Time Spent</h3>
           <div className="container mt-4 fieldagentmange">
-            {/* Filters */}
             <div className="row mb-4 bg-light p-3 rounded shadow-sm">
               <div className="col-md-3">
                 <CustomAutocomplete
@@ -280,7 +240,6 @@ const TimeSpent = () => {
               <div className="col-md-2">
                 <TextField
                   type="date"
-                  // label="From Date"
                   name="fromDate"
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
@@ -292,7 +251,6 @@ const TimeSpent = () => {
               <div className="col-md-2">
                 <TextField
                   type="date"
-                  // label="To Date"
                   name="toDate"
                   value={toDate}
                   onChange={(e) => setToDate(e.target.value)}
@@ -301,7 +259,6 @@ const TimeSpent = () => {
                 />
               </div>
 
-              {/* Team Autocomplete */}
               <div className="col-md-3">
                 <CustomAutocomplete
                   options={teamData}
@@ -312,27 +269,21 @@ const TimeSpent = () => {
                     setTeam(newValue);
                     setName(null);
                   }}
-
                   placeholder="Select team"
                   sx={{ backgroundColor: "white" }}
                 />
               </div>
             </div>
 
-            {/* Export Buttons */}
             <div className="mb-3">
-              <button
-                className="btn  me-2 fieldadd-btn"
-                onClick={exportToExcel}
-              >
+              <button className="btn me-2 fieldadd-btn" onClick={exportToExcel}>
                 <FaFileExcel /> Export to Excel
               </button>
-              <button className="btn  fieldadd-btn" onClick={exportToPDF}>
+              <button className="btn fieldadd-btn" onClick={exportToPDF}>
                 <FaFilePdf /> Export to PDF
               </button>
             </div>
 
-            {/* Table */}
             <table className="table table-striped">
               <thead className="table-dark">
                 <tr>
@@ -343,7 +294,6 @@ const TimeSpent = () => {
                   <th>Start Time</th>
                   <th>End Time</th>
                   <th>Time Spent</th>
-                  {/* <th>Actions</th> */}
                 </tr>
               </thead>
               <tbody>
@@ -355,33 +305,28 @@ const TimeSpent = () => {
                   </tr>
                 ) : (
                   currentTeams.map((team) => (
-                    <tr >
-                      <td>{new Date(team.date).toLocaleDateString()}</td>
-                      <td>{team.nickName.replace(/\b\w/g, char => char.toUpperCase())}</td>
-                      <td>{team.teamName.replace(/\b\w/g, char => char.toUpperCase())}</td>
-                      <td>{team.fieldTag.replace(/\b\w/g, char => char.toUpperCase())}</td>
-                      <td>{team.startTime}</td>
-                      <td>{team.endTime}</td>
-                      <td>{team.totalTimeSpent}</td>
-                      {/* <td>
-                        <FaEdit className="action-icon me-2" title="Edit" />
-                        <FaEye className="action-icon me-2" title="View" />
-                        <FaTrashAlt className="action-icon" title="Delete" />
-                      </td> */}
+                    <tr key={team.id || team.date}>
+                      <td>{team.date ? new Date(team.date).toLocaleDateString() : ""}</td>
+                      <td>{team.nickName ? team.nickName.replace(/\b\w/g, (char) => char.toUpperCase()) : ""}</td>
+                      <td>{team.teamName ? team.teamName.replace(/\b\w/g, (char) => char.toUpperCase()) : ""}</td>
+                      <td>{team.fieldTag ? team.fieldTag.replace(/\b\w/g, (char) => char.toUpperCase()) : ""}</td>
+                      <td>{team.startTime || ""}</td>
+                      <td>{team.endTime || ""}</td>
+                      <td>{team.totalTimeSpent || ""}</td>
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
 
-            {/* Pagination */}
             <nav aria-label="Page navigation">
               <ul className="pagination justify-content-center">
                 {[...Array(totalPages)].map((_, index) => (
                   <li
                     key={index}
-                    className={`page-item ${currentPage === index + 1 ? "active" : ""
-                      }`}
+                    className={`page-item ${
+                      currentPage === index + 1 ? "active" : ""
+                    }`}
                   >
                     <button
                       className="page-link"

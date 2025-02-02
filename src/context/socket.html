@@ -1,0 +1,112 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+<h1>WebSocket Test</h1>
+
+<!-- Input for teamId -->
+<div>
+    <label for="teamId">Team ID:</label>
+    <input type="text" id="teamId" placeholder="Enter Team ID">
+    <button onclick="sendTeamMessage()">Send Team Message</button>
+</div>
+
+<!-- Input for fieldAgentId -->
+<div>
+    <label for="fieldAgentId">Field Agent ID:</label>
+    <input type="text" id="fieldAgentId" placeholder="Enter Field Agent ID">
+    <button onclick="sendFieldAgentMessage()">Send Field Agent Message</button>
+</div>
+
+<!-- Log Messages -->
+<h2>Logs</h2>
+<div id="log" style="border: 1px solid #ccc; padding: 10px; height: 200px; overflow-y: scroll;"></div>
+
+<script>
+    const socketUrl = "https://uat-tracking.rmtec.in:4000/tracking-websocket"; // Replace with your WebSocket URL
+    // Bearer token for authentication
+    const bearerToken = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdXRob3JpdGllcyI6WyJGaWVsZEFnZW50SWRfMiIsIkFnZW50TWFpbF9kaGFybWF0aXJ1cHVyMjM1QGdtYWlsLmNvbSIsIkFnZW50TmFtZV9odSIsIlRlYW1JRF8zNTIiLCJUZWFtTmFtZV9UZWFtIGRoYXJtYSIsIlVzZXJJZF8yIiwiUm9sZUlkXzIiLCJSb2xlTmFtZV9NYW5hZ2VyIl0sInN1YiI6ImRoYXJtYXRpcnVwdXIyMzVAZ21haWwuY29tIiwiaWF0IjoxNzM0NjEzNTgwLCJleHAiOjE3NjYxNDk1ODB9.f1h6oazMvRR-sb7nODDdo0FqdCCAJxvcAgIylba4HKQ";
+    // WebSocket and STOMP Client
+    const socket = new SockJS(socketUrl);
+    const stompClient = Stomp.over(socket);
+
+    const headers = {
+        Authorization: bearerToken // Include the Bearer token in the headers
+    };
+
+    // Connect to WebSocket
+    stompClient.connect(headers, () => {
+        logMessage("Connected to WebSocket server");
+
+        // Subscribe to team updates
+        stompClient.subscribe('/topic/team/103', (message) => {
+            logMessage("Team Message: " + message.body);
+        });
+
+        // Subscribe to field agent updates
+        stompClient.subscribe('/queue/agent/1810', (message) => {
+            logMessage("Field Agent Message: " + message.body);
+        });
+    }, (error) => {
+        logMessage("WebSocket connection failed: " + error);
+    });
+
+    // Function to send message for Team ID
+    function sendTeamMessage() {
+        const teamId = document.getElementById('teamId').value;
+        if (!teamId) {
+            alert("Please enter a Team ID");
+            return;
+        }
+
+        const payload = {
+            teamId: teamId,
+            fieldAgent: null,
+            payload: {
+                message: "Test message for Team ID " + teamId
+            }
+        };
+
+        stompClient.send("/app/message", {}, JSON.stringify(payload));
+        logMessage("Sent Team Message: " + JSON.stringify(payload));
+    }
+
+    // Function to send message for Field Agent ID
+    function sendFieldAgentMessage() {
+        const fieldAgentId = document.getElementById('fieldAgentId').value;
+        if (!fieldAgentId) {
+            alert("Please enter a Field Agent ID");
+            return;
+        }
+
+        const payload = {
+            teamId: null,
+            fieldAgent: fieldAgentId,
+            payload: {
+                message: "Test message for Field Agent ID " + fieldAgentId
+            }
+        };
+
+        stompClient.send("/app/message", {}, JSON.stringify(payload));
+        logMessage("Sent Field Agent Message: " + JSON.stringify(payload));
+    }
+
+    // Function to log messages
+    function logMessage(message) {
+        const logDiv = document.getElementById('log');
+        const messageDiv = document.createElement('div');
+        messageDiv.textContent = message;
+        logDiv.appendChild(messageDiv);
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
+</script>
+</body>
+</html>

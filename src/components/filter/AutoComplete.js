@@ -17,9 +17,10 @@ const CustomAutocomplete = ({
         <Autocomplete
             options={options}
             getOptionLabel={getOptionLabel}
+            
             value={value}
             onChange={onChange}
-            disableClearable={disableClearable}
+             disableClearable={true}
             sx={{
                 width: "100%",
                 ...sx,

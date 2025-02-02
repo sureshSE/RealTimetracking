@@ -55,7 +55,7 @@ const AgentPrivileges = () => {
   const fetchDropdownData = async (user) => {
     try {
       const response = await axios.get(
-        `https://uat-tracking.rmtec.in/api/fieldAgent/getAgentById/${user.fieldAgentId}`,
+        `https://uat-tracking.rmtec.in:4000/api/fieldAgent/getAgentById/${user.fieldAgentId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -162,7 +162,7 @@ const AgentPrivileges = () => {
 
     try {
       await axios.post(
-        "https://uat-tracking.rmtec.in/api/privilege/addPrivilege",
+        "https://uat-tracking.rmtec.in:4000/api/privilege/addPrivilege",
         payload,
         {
           headers: {
@@ -255,6 +255,8 @@ const AgentPrivileges = () => {
         </span>
         <form id="privilegesForm" onSubmit={handleSubmit}>
           <div className="form-group">
+          <div className="row">
+          <div className="col-md-4 mb-4">
             <label htmlFor="teamId">Teams List</label>
             <select
               id="teamId"
@@ -279,9 +281,7 @@ const AgentPrivileges = () => {
               ))}
             </select>
           </div>
-
-          <div className="form-group">
-            <label htmlFor="userId">User List</label>
+          <div className="col-md-4 mb-4"> <label htmlFor="userId">User List</label>
             <select
               id="userId"
               name="userId"
@@ -295,8 +295,9 @@ const AgentPrivileges = () => {
                   {users.nickName}
                 </option>
               ))}
-            </select>
-          </div>
+            </select></div>
+</div></div>
+        
           <div className="mt-4">
             <table className="table table-striped table-hover">
               <thead className="thead-dark">

@@ -84,7 +84,7 @@ const ScheduleList = () => {
 
       await axios
         .post(
-          "https://uat-tracking.rmtec.in/api/scheduledVisitTrackId/getAllScheduledVisitTrackId",
+          "https://uat-tracking.rmtec.in:4000/api/scheduledVisitTrackId/getAllScheduledVisitTrackId",
           payload,
           {
             headers: {
@@ -121,7 +121,7 @@ const ScheduleList = () => {
     const token = localStorage.getItem("token");
     axios
       .post(
-        "https://uat-tracking.rmtec.in/api/scheduledVisitTrackId/getAllScheduledVisitTrackId",
+        "https://uat-tracking.rmtec.in:4000/api/scheduledVisitTrackId/getAllScheduledVisitTrackId",
 
         {
           query: "",
@@ -131,6 +131,7 @@ const ScheduleList = () => {
             assigner: `${user.fieldAgentId}`,
             roleId: ``,
             agentMail: "",
+            assignee: "",
             startDate: "",
             endDate: "",
             search: "",
@@ -225,7 +226,7 @@ const ScheduleList = () => {
     <>
       <HelmetProvider>
         <Helmet>
-          <title>Schedule List - RealTimeTracking</title>
+          <title>Schedule Detalis - RealTimeTracking</title>
           <meta
             name="description"
             content="Overview of field agent performance and metrics."
@@ -234,7 +235,7 @@ const ScheduleList = () => {
         </Helmet>
       </HelmetProvider>
 
-      <h3 className="title">Schedule List</h3>
+      <h3 className="title">Schedule Detalis</h3>
 
       <div className="mt-5 fieldagentlist">
 
@@ -243,18 +244,7 @@ const ScheduleList = () => {
           padding: "20px",
           borderRadius: "10px",
         }}>
-          <div className="col-md-3">
-            <CuatomAutocomplete
-              options={filteredTeams}
-              value={name}
-              label="Select Name"
-              getOptionLabel={(option) => option.assignee}
-              onChange={(event, newValue) => setName(newValue)}
-              placeholder="Select name"
-              sx={{ backgroundColor: "white" }}
-            />
-
-          </div>
+         
 
           <div className="col-md-3">
             <TextField
@@ -278,6 +268,18 @@ const ScheduleList = () => {
               variant="outlined"
               fullWidth
             />
+          </div>
+          <div className="col-md-3">
+            <CuatomAutocomplete
+              options={filteredTeams}
+              value={name}
+              label="Select Name"
+              getOptionLabel={(option) => option.assignee}
+              onChange={(event, newValue) => setName(newValue)}
+              placeholder="Select Agent Email "
+              sx={{ backgroundColor: "white" }}
+            />
+
           </div>
 
           {/* Team Autocomplete */}
@@ -336,8 +338,17 @@ const ScheduleList = () => {
   <table className="table table-hover table-striped">
     <thead className="table-dark">
       <tr>
+      <th onClick={() => handleSort("date")} style={{ cursor: "pointer" }}>
+          Date{" "}
+          {sortField === "date" &&
+            (sortOrder === "asc" ? (
+              <FaSortUp className="ms-2" />
+            ) : (
+              <FaSortDown className="ms-2" />
+            ))}
+        </th>
         <th onClick={() => handleSort("name")} style={{ cursor: "pointer" }}>
-          Agent Name{" "}
+          Agent Email{" "}
           {sortField === "name" &&
             (sortOrder === "asc" ? (
               <FaSortUp className="ms-2" />
@@ -345,6 +356,7 @@ const ScheduleList = () => {
               <FaSortDown className="ms-2" />
             ))}
         </th>
+       
         <th onClick={() => handleSort("fieldAgentEmail")} style={{ cursor: "pointer" }}>
           Schedule Date{" "}
           {sortField === "fieldAgentEmail" &&
@@ -388,6 +400,7 @@ const ScheduleList = () => {
       {employees.length > 0 ? (
         employees.map((employee) => (
           <tr key={employee.fieldAgentId}>
+            <td>{employee.date}</td>
             <td>{employee.assignee}</td>
             <td>{employee.time}</td>
             <td>{employee.description}</td>
