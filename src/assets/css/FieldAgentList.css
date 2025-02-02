@@ -1,0 +1,70 @@
+/* Background color for the entire page */
+body {
+    background-color: #f5f5f5; /* Light grey for a softer background */
+    font-family: Arial, sans-serif; /* Use a clean, modern font */
+}
+
+/* Title styling */
+h3.title {
+    color: #333; /* Dark grey for better contrast */
+    text-align: left;
+    margin-top: 20px;
+    font-weight: bold;
+}
+
+
+/* Search and filter section styling */
+.mb-3 {
+    /* display: flex; */
+    justify-content: space-between;
+    /* align-items: center; */
+    flex-wrap: wrap;
+}
+.fieldagentlist{
+    /* width: 95%; */
+    margin: 0px 72px !important;
+    margin-top: 50px !important;
+    background-color: #ffffff; /* White background for the card */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow effect */
+    padding: 20px; /* Padding around the content */
+}
+
+
+/* Table styling */
+.table {
+    width: 100%;
+    margin: 20px 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table thead th {
+    background-color: #0d6efd; /* Primary color for headers */
+    color: #ffffff; /* White text color for headers */
+    text-align: center; /* Center-align the header text */
+    padding: 10px;
+}
+
+.table tbody tr {
+    transition: background-color 0.2s; /* Smooth transition for hover effect */
+}
+
+.table tbody tr:hover {
+    background-color: #f1f1f1; /* Light gray color when hovering over rows */
+}
+
+.table td {
+    padding: 12px; /* Increase padding for better spacing */
+    text-align: center; /* Center-align the cell text */
+    border-bottom: 1px solid #e0e0e0; /* Light grey border for separation */
+}
+
+/* Rounded corners for the table */
+.table-container {
+    border-radius: 8px; /* Rounded corners */
+    overflow: hidden; /* Ensures corners remain rounded */
+}
+
+
+

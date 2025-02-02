@@ -1,0 +1,57 @@
+/* FieldAgentAdd.css */
+body {
+    background-color: #FCF6E4; /* Light background color */
+}
+
+h2 {
+    color: #343a40; /* Darker color for headings */
+    text-align: center; /* Center align heading */
+    margin-bottom: 20px; /* Space below the heading */
+}
+
+
+.fieldagentmange{
+    /* margin: 0 130px; Center the form */
+    padding: 20px; /* Padding inside the form */
+    border-radius: 10px; /* Rounded corners */
+    background-color: #F5F5F5; /* White background for the form */
+   /* box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.1);  Subtle shadow */
+}
+
+.fieldadd-btn {
+    background-color: #0d6efd !important;
+    border: none;
+    font-size: 15px !important;
+    padding: 10px 50px;
+    /* width: 50% !important;*/
+    /* float: left; */
+}
+.cancel-btn{
+    background-color: #fff !important;
+    border: 2px solid #808080;
+    color:#999999;
+    font-size: 15px !important;
+    padding: 10px 50px;
+    /* width: 50% !important;*/
+    /* float: left; */
+    margin-left: 10px;
+}
+
+.fieldadd-btn:hover{
+    background-color: #0d6efd !important;
+  
+}
+
+.cancel-btn:hover{
+    /* background-color: #0d6efd !important; */
+    border: 2px solid #0d6efd;
+    color:#999999 !important;
+}
+.alert {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1050; /* Ensure it appears above other content */
+}
+

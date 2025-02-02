@@ -1,0 +1,215 @@
+/* Inactive Tabs (default) */
+.nav-tabs .nav-link {
+  font-size: 14px; /* Font size for inactive tabs */
+  color: #0d6efd; /* Default tab text color */
+  font-weight: bold; /* Bold text */
+  background-color: #f8f9fa; /* Light background for inactive tabs */
+  border-radius: 10px 10px 0 0; /* Rounded corners for tabs */
+  margin-right: 5px; /* Add some spacing between tabs */
+  transition: background-color 0.3s ease, color 0.3s ease, font-size 0.3s ease; /* Smooth transition for hover, active states, and font size */
+}
+
+/* Active Tab */
+.nav-tabs .nav-link.active {
+  font-size: 16px; /* Font size for active tab */
+  background-color: #0d6efd; /* Active tab background color */
+  color: white; /* Active tab text color */
+  border-color: #0d6efd; /* Active tab border color */
+  border-radius: 10px 10px 0 0; /* Maintain rounded top corners */
+  transition: font-size 0.3s ease, background-color 0.3s ease, color 0.3s ease; /* Smooth transition for font size */
+}
+
+/* Hover effect for inactive tabs */
+.nav-tabs .nav-link:hover {
+  background-color: #e2e6ea;/*  Light gray background on hover */
+  color: #000 !important; /* Darker blue text on hover */
+}
+
+/* Tab Content Styling */
+.tab-content .tab-pane {
+  background-color: #fff; /* Background color for content area */
+  padding: 20px; /* Add some padding inside the content */
+  border: 1px solid #ddd; /* Border around content */
+  border-top: none; /* Remove top border so it connects with the active tab */
+  border-radius: 0 10px 10px 10px; /* Rounded corners for content */
+}
+
+/* Switch Toggle Button */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #0d6efd;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+/* Agent Card Styling */
+.agent-card {
+  transition: box-shadow 0.3s ease;
+}
+
+.agent-card:hover {
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Tab Navigation Content */
+.tab-content {
+  margin-top: 0px;
+}
+
+.profile {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+/* TimeSpent.css */
+.searchagent {
+  margin-bottom: 10px;
+}
+
+/* Agent List Styling */
+.agent-list {
+  max-height: 500px; /* Reduced max height for a smaller scroll area */
+  overflow-y: auto;  /* Enable vertical scrolling */
+  margin-bottom: 20px; /* Add some spacing below */
+ /* border: 1px solid #ddd;  Add a border around the agent list */
+  border-radius: 10px; /* Rounded corners for the agent list */
+ /* background-color: #f9f9f9;  Light background for the agent list */
+  padding: 5px; /* Padding inside the agent list */
+}
+
+/* Agent Card Styling */
+.agent-card {
+   /* background-color: #ffffff;White background for agent cards */
+  border: 1px solid #ddd; /* Border around each card */
+  border-radius: 10px; /* Rounded corners for agent cards */
+  padding: 15px; /* Padding inside each card */
+  margin-bottom: 10px; /* Space between cards */
+  transition: box-shadow 0.3s ease; /* Transition for hover effect */
+}
+
+/* Agent Card Hover Effect */
+.agent-card:hover {
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover */
+}
+
+/* Custom Scrollbar Styling */
+.agent-list::-webkit-scrollbar {
+  width: 8px; /* Width of the scrollbar */
+}
+
+.agent-list::-webkit-scrollbar-thumb {
+  background: #bbb; /* Color of the scrollbar handle */
+  border-radius: 10px; /* Rounded corners for the scrollbar handle */
+}
+
+.agent-list::-webkit-scrollbar-thumb:hover {
+  background: #888; /* Darker color on hover */
+}
+
+.privileges-btn{
+  background-color: #0d6efd !important;
+  border: none;
+  font-size: 20px !important;
+  /* padding: 10px;
+  width: 10% !important; */
+}
+.privileges-btn:hover{
+  background-color: #0d6efd !important;
+}
+
+.agentprivileges{
+  margin-top: 50px !important;
+  }
+
+.agentprivileges{
+    /* margin: 0 130px; Center the form */
+    padding: 20px; /* Padding inside the form */
+    border-radius: 10px; /* Rounded corners */
+    background-color: white; /* White background for the form */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+.bg-agentprivileges{
+  background-color: none !important;
+  --bs-card-bg: var(--bs-body-bg) none !important; 
+  --bs-card-border-color: var(--bs-border-color-translucent) none !important;
+   padding: var(--bs-card-spacer-y) var(--bs-card-spacer-x) none !important;
+}
+
+.bg-agentprivileges .card-body{
+   padding: var(--bs-card-spacer-y) var(--bs-card-spacer-x) none !important;
+}
+
+/* Table styling */
+.privil-table {
+  width: 100%;
+  margin: 20px 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.privil-table thead th {
+  background-color: #0d6efd; /* Primary color for headers */
+  color: #ffffff; /* White text color for headers */
+  text-align: center; /* Center-align the header text */
+  padding: 10px;
+}
+
+.privil-table tbody tr {
+  transition: background-color 0.2s; /* Smooth transition for hover effect */
+}
+
+.privil-table tbody tr:hover {
+  background-color: #f1f1f1; /* Light gray color when hovering over rows */
+}
+
+.privil-table td {
+  padding: 12px; /* Increase padding for better spacing */
+ /* text-align: center;  Center-align the cell text */
+  border: 1px solid #e0e0e0; /* Light grey border for separation */
+}
+
+/* Rounded corners for the table */
+.privil-table-container {
+  border-radius: 8px; /* Rounded corners */
+  overflow: hidden; /* Ensures corners remain rounded */
+}

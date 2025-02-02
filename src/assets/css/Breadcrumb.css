@@ -1,0 +1,26 @@
+/* Breadcrumb.css */
+.breadcrumb {
+    background-color: transparent; /* Make the background transparent */
+    /* padding: 0.5rem 1rem;  */
+    border-radius: 0.25rem; 
+     /* Optional: rounded corners */
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: ">";
+    /* padding: 0 0.5rem; */
+    color: #6c757d; /* Color for the separator */
+}
+
+.breadcrumb-item.active {
+    color: #6c757d; /* Color for the active breadcrumb */
+}
+
+.breadcrumb-container {
+    border: 1px solid #ddd;
+    /* padding: 10px; */
+    border-radius: 5px;
+}
+.breadcrumb {
+    margin-top: 10px;
+}
